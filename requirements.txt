@@ -1,0 +1,4 @@
+requests==2.14.0
+jira
+PyGithub
+jinja2
