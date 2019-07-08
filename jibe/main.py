@@ -69,4 +69,4 @@ def main():
 
     # Create mailer object and send email
     Mailer = m.Mailer()
-    Mailer.send(['sid.premkumar@gmail.com', 'srieger256@redhat.com'], 'test', html)
+    Mailer.send(['sid.premkumar@gmail.com'], 'test', html)
