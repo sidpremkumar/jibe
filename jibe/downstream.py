@@ -211,14 +211,16 @@ def check_assignee(existing, issue):
                                             out-of-sync updated
     """
     if existing.fields.assignee:
-        if existing.fields.assignee.displayName == issue.assignee[0]:
-            # If they're the same return
-            return issue
+        if issue.source == 'github':
+            if existing.fields.assignee.displayName == issue.assignee[0]['fullname']:
+                # If they're the same return
+                return issue
     elif issue.assignee is None:
         # If they are both unassigned
         return issue
     # Else they are different
-    upstream = issue.assignee
+    if issue.source == 'github':
+        upstream = issue.assignee[0]['fullname']
     downstream = existing.fields.assignee
     issue.out_of_sync['assignee'] = {'upstream': upstream, 'downstream': downstream}
     return issue
@@ -234,8 +236,7 @@ def check_title(existing, issue):
         response (jibe.intermediary.Issue): Issue object with updated
                                             out-of-sync updated
     """
-    sync2jira_title = u'[%s] %s' % (issue.upstream, issue.title)
-    if existing.fields.summary == issue.title or sync2jira_title == issue.title:
+    if existing.fields.summary == issue.title or existing.fields.summary == issue.upstream_title:
         # If they're the same return
         return issue
     # Else they are different
@@ -296,7 +297,10 @@ def update_out_of_sync(existing, issue, client, config):
     check = issue.downstream.get('check', {})
 
     # Update basic information
+    # Update issue key (i.e. FACTORY-XXX)
     issue.downstream_id = existing.key
+
+    # Update downstream URL
     jira_instance = issue.downstream.get('jira_instance', False)
     if not jira_instance:
         jira_instance = config['jibe'].get('default_jira_instance', False)
@@ -306,22 +310,37 @@ def update_out_of_sync(existing, issue, client, config):
     url = config['jibe']['jira'][jira_instance]['options']['server'] + '/browse/' + existing.key
     issue.downstream_url = url
 
+    # Update priority
+    if existing.fields.priority:
+        issue.priority = existing.fields.priority.name
+        issue.priority_icon = existing.fields.priority.iconUrl
+    else:
+        issue.priority = 'Unknown'
+        issue.priority_icon = 'Unknown'
+
     if not check:
         # Something might be up if check returns {}
         log.warning('   Nothing to check for issue %s' % issue.title)
         return issue
 
+    total_done = 0
+
     if 'comments' in check:
         log.info('   Looking for out of sync comment(s)')
         issue = check_comments(existing, issue, client)
+        if issue.out_of_sync['comments'] == 'in-sync':
+            total_done += 1
 
     if 'tags' in check:
         log.info('   Looking for out of sync tags')
         issue = check_tags(existing, issue)
+        if issue.out_of_sync['comments'] == 'in-sync':
+            total_done += 1
 
     if 'fixVersion' in check:
         log.info('   Looking for out of sync fixVersion(s)')
         issue = check_fixVersion(existing, issue)
+
 
     if 'assignee' in check:
         log.info('   Looking for out of sync assignee(s)')
@@ -335,6 +354,10 @@ def update_out_of_sync(existing, issue, client, config):
         log.info('   Looking for out of sync transition state')
         issue = check_transition(existing, issue)
 
+    # Update percent done
+    issue.total = len(check)
+
+    import pdb; pdb.set_trace()
     return issue
 
 

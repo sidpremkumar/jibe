@@ -1,8 +1,8 @@
 
 class Issue(object):
     def __init__(self, source, title, url, upstream, comments,
-                 config, tags, fixVersion, priority, content,
-                 reporter, assignee, status, id, downstream=None):
+                 config, tags, fixVersion, priority, priority_icon,
+                 content, reporter, assignee, status, id, downstream=None):
         self.source = source
         self.title = title
         self.url = url
@@ -11,6 +11,7 @@ class Issue(object):
         self.tags = tags
         self.fixVersion = fixVersion
         self.priority = priority
+        self.priority_icon = priority_icon
         self.content = content
         self.reporter = reporter
         self.assignee = assignee
@@ -18,12 +19,19 @@ class Issue(object):
         self.id = id
         self.downstream_url = ''
         self.downstream_id = ''
+        self.percent_done = ''
+        self.done = ''
+        self.total = ''
         self.out_of_sync = {'comments': 'in-sync', 'tags': 'in-sync', 'fixVersion': 'in-sync',
                             'assignee': 'in-sync', 'title': 'in-sync', 'transition': 'in-sync'}
         if not downstream:
             self.downstream = config['jibe']['upstream'][self.source][upstream]
         else:
             self.downstream = downstream
+
+    @property
+    def upstream_title(self):
+        return u'[%s] %s' % (self.upstream, self.title)
 
     @classmethod
     def from_github(cls, upstream, issue, config):
@@ -45,7 +53,6 @@ class Issue(object):
             elif issue['state'] == 'closed':
                 issue['state'] = 'Closed'
 
-        # TODO: Priority is broken
         return Issue(
             source='github',
             title=issue['title'],
@@ -56,6 +63,7 @@ class Issue(object):
             tags=issue['labels'],
             fixVersion=[issue['milestone']],
             priority=None,
+            priority_icon=None,
             content=issue['body'],
             reporter=issue['user'],
             assignee=issue['assignees'],
