@@ -1,3 +1,6 @@
+# Built In Modules
+import logging
+
 # 3rd Party Modules
 import requests
 from github import Github
@@ -5,12 +8,18 @@ from github import Github
 # Local Modules
 import jibe.intermediary as i
 
-def get_upstream_issues(config):
+# Global Variables
+log = logging.getLogger(__name__)
+
+
+def get_upstream_issues(config, group):
     """
     Gets all upstream issues in question
     Args:
          config (dict): The config dict to be used
                         later in the program
+         group (str): Group in config file we should
+                      look at
     Returns:
         Issues list(jibe.intermediary.Issues): List of issues
                                                that need to be
@@ -19,23 +28,70 @@ def get_upstream_issues(config):
     all_issues = []
     # Get all Github Issues
     # First get a list of upstream names
-    github_repo_names = config['jibe']['upstream']['github'].keys()
+    github_repo_names = config['jibe']['send-to'][group]['upstream']['github'].keys()
+    pagure_repo_names = config['jibe']['send-to'][group]['upstream']['pagure'].keys()
     for repo in github_repo_names:
         # Loop through all repos and get issue data
-        for issue in github_issues(repo, config):
+        for issue in github_issues(repo, config, group):
             all_issues.append(issue)
-
+    log.info('   Done grabbing all Github issues ')
+    for repo in pagure_repo_names:
+        # Loop through all repos and get issue data
+        for issue in pagure_issues(repo, config, group):
+            all_issues.append(issue)
+    log.info('   Done grabbing all Github issues ')
     # Return all Issues
     return all_issues
 
 
-
-def github_issues(upstream, config):
+def pagure_issues(upstream, config, group):
     """
     Gets all issues related to upstream Repo
     Args:
         upstream str: Upstream repo name
         config dict: Config dict
+        group (str): Group in config file we should
+                     look at
+    Returns:
+        Issues jibe.intermediary.Issues: List of issues and their metadata
+    """
+    base = config['jibe'].get('pagure_url', 'https://pagure.io')
+    url = base + '/api/0/' + upstream + '/issues'
+
+    params = config['jibe']\
+        .get('filters', {})\
+        .get('pagure', {}) \
+        .get(upstream, {})
+
+    response = requests.get(url, params=params)
+    if not bool(response):
+        try:
+            reason = response.json()
+        except Exception:
+            reason = response.text
+        raise IOError("response: %r %r %r" % (response, reason, response.request.url))
+    data = response.json()['issues']
+
+    # Reformat  the assignee value so that it is enclosed within an array
+    # We do this because Github supports multiple assignees, but JIRA doesn't :(
+    # Hopefully in the future it will support multiple assignees, thus enclosing
+    # the assignees in a list prepares for that support
+    for issue in data:
+        issue['assignee'] = [issue['assignee']]
+
+    issues = (i.Issue.from_pagure(upstream, issue, config, group) for issue in data)
+    for issue in issues:
+        yield issue
+
+
+def github_issues(upstream, config, group):
+    """
+    Gets all issues related to upstream Repo
+    Args:
+        upstream str: Upstream repo name
+        config dict: Config dict
+        group (str): Group in config file we should
+                     look at
     Returns:
         Issues jibe.intermediary.Issues: List of issues and their metadata
     """
@@ -117,7 +173,7 @@ def github_issues(upstream, config):
         final_issues.append(issue)
 
     final_issues = list((
-        i.Issue.from_github(upstream, issue, config) for issue in final_issues
+        i.Issue.from_github(upstream, issue, config, group) for issue in final_issues
         if 'pull_request' not in issue  # We don't want to copy these around
     ))
 
