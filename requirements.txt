@@ -1,4 +1,4 @@
-requests==2.14.0
+requests>=2.20.0
 jira
 PyGithub
 jinja2

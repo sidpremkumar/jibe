@@ -1,8 +1,12 @@
+# Built In Modules
+from datetime import datetime
+
 
 class Issue(object):
     def __init__(self, source, title, url, upstream, comments,
                  config, tags, fixVersion, priority, priority_icon,
-                 content, reporter, assignee, status, id, downstream=None):
+                 content, reporter, assignee, status, id, group,
+                 downstream=None):
         self.source = source
         self.title = title
         self.url = url
@@ -22,10 +26,11 @@ class Issue(object):
         self.percent_done = ''
         self.done = ''
         self.total = ''
+        self.check = []
         self.out_of_sync = {'comments': 'in-sync', 'tags': 'in-sync', 'fixVersion': 'in-sync',
                             'assignee': 'in-sync', 'title': 'in-sync', 'transition': 'in-sync'}
         if not downstream:
-            self.downstream = config['jibe']['upstream'][self.source][upstream]
+            self.downstream = config['jibe']['send-to'][group]['upstream'][self.source][upstream]
         else:
             self.downstream = downstream
 
@@ -34,7 +39,7 @@ class Issue(object):
         return u'[%s] %s' % (self.upstream, self.title)
 
     @classmethod
-    def from_github(cls, upstream, issue, config):
+    def from_github(cls, upstream, issue, config, group):
         comments = []
         for comment in issue['comments']:
             comments.append({
@@ -68,7 +73,47 @@ class Issue(object):
             reporter=issue['user'],
             assignee=issue['assignees'],
             status=issue['state'],
-            id=issue['id']
+            id=issue['id'],
+            group=group
+        )
+
+    @classmethod
+    def from_pagure(cls, upstream, issue, config, group):
+        base = config['jibe'].get('pagure_url', 'https://pagure.io')
+        comments = []
+        for comment in issue['comments']:
+            # Only add comments that are not Metadata updates
+            if '**Metadata Update' in comment['comment']:
+                continue
+            # Else add the comment
+            # Convert the date to datetime
+            comment['date_created'] = datetime.utcfromtimestamp(float(comment['date_created']))
+            comments.append({
+                'author': comment['user']['name'],
+                'body': comment['comment'],
+                'name': comment['user']['name'],
+                'id': comment['id'],
+                'date_created': comment['date_created'],
+                'changed': None
+            })
+
+        return Issue(
+            source='pagure',
+            title=issue['title'],
+            url=base + '/%s/issue/%i' % (upstream, issue['id']),
+            upstream=upstream,
+            config=config,
+            comments=comments,
+            tags=issue['tags'],
+            fixVersion=[issue['milestone']],
+            priority=issue['priority'],
+            priority_icon=None,
+            content=issue['content'],
+            reporter=issue['user'],
+            assignee=issue['assignee'],
+            status=issue['status'],
+            id=issue['date_created'],
+            group=group
         )
 
     def __repr__(self):

@@ -1,17 +1,16 @@
 <html>
     <body style="font-family: Georgia; font-size: 14px;">
-    <h1 stlye=""> Out Of Sync Issues: </h1>
-        <div style="width: 80%; margin: auto;">
+        <div style="width: 60%; margin: auto;">
+            {% if joke %}
+                <h1 style="font-size: 20px;text-align: center;"><u>{{ joke }}</u></h1>
+            {% endif %}
+            <h1 stlye=""><u>Out Of Sync Issues:</u></h1>
             {%  for issue in out_of_sync_issues %}
-                <table width="100%" style="border: 0; margin: 0; width: 100%; padding: 1px;"><tr>
+                {% if issue.done == issue.total %}
+                    <table width="100%" style="border: 0; margin: 0; padding: 1px;"><tr>
                     <td style="border-radius: 3px; border: 1px solid #dddddd;
                       font-size: 14px; padding: 1px; margin-right: 5px;
                       font-weight: bold; text-align: center; width: 80px;">
-{#                        <div style="height: 28px;overflow: hidden;">#}
-{#                            <a href="{{ issue.downstream_url }}" style="text-decoration: none; font-size: 19px;#}
-{#                             font-weight: bold;overflow: hidden;">#}
-{#                                {{ issue.title }}/ {{ issue.downstream_id }}#}
-{#                            </a>#}
                              {% if issue.priority == 'Blocker' %}
                                 <img src="cid:blocker_priority_image" style="height: 16px;
                                 width: 16px; vertical-align: text-top;" />
@@ -29,7 +28,65 @@
                                 width: 16px; vertical-align: text-top;" />
                             {% endif %}
                             {{ issue.priority|e }}
-{#                        </div>#}
+                    </td>
+                    <td style="width: auto; padding: 0;"><div style="height: 28px;
+                                                          overflow: hidden;">
+                        <a href="{{ issue.url }}" style="text-decoration: none; font-size: 19px;
+                         font-weight: bold; overflow: hidden;">
+                            {{ issue.upstream_title }} </a>
+                        <b>/</b>
+                        <a href="{{ issue.downstream_url }}" style="text-decoration: none; font-size: 19px;
+                         font-weight: bold; overflow: hidden;">
+                            {{ issue.downstream_id }} </a>
+                        <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
+                        padding-right: 2px;'>&#10004;</p>
+                    </div></td>
+                    <td style="width: 130px; overflow: visible;
+                           background-color: #ddd; border-radius: 4px;
+                           -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+                           box-shadow: inset 0 1px 2px rgba(0,0,0,.1);">
+                        <div style="width: {{ issue.percent_done }}%;
+                              height: 100%;color: #000000;
+                              text-align: center; background-color: #808cee;
+                              background-image:
+                                linear-gradient(45deg,
+                                                rgba(255,255,255,.15) 25%,
+                                                transparent 25%,
+                                                transparent 50%,
+                                                rgba(255,255,255,.15) 50%,
+                                                rgba(255,255,255,.15) 75%,
+                                                transparent 75%, transparent);
+                              background-size: 40px 40px; color: #000000;
+                              white-space: nowrap; font-size: 14px;">
+                            <span style="padding-left: 5px; padding-top: 5px;font-weight: bold;">
+                              {{ issue.done }}/{{ issue.total }} issues in sync
+                            </span>
+                        </div>
+                    </td>
+                </tr></table>
+                <hr>
+                {% else %}
+                <table width="100%" style="border: 0; margin: 0; width: 100%; padding: 1px;"><tr>
+                    <td style="border-radius: 3px; border: 1px solid #dddddd;
+                      font-size: 14px; padding: 1px; margin-right: 5px;
+                      font-weight: bold; text-align: center; width: 80px;">
+                             {% if issue.priority == 'Blocker' %}
+                                <img src="cid:blocker_priority_image" style="height: 16px;
+                                width: 16px; vertical-align: text-top;" />
+                            {% elif issue.priority  == 'Critical' %}
+                                <img src="cid:critical_priority_image" style="height: 16px;
+                                width: 16px; vertical-align: text-top;" />
+                            {% elif issue.priority  == 'Major' %}
+                                <img src="cid:major_priority_image" style="height: 16px;
+                                width: 16px; vertical-align: text-top;" />
+                            {% elif issue.priority  == 'Minor' or issue.priority  == 'Normal' %}
+                                <img src="cid:minor_priority_image" style="height: 16px;
+                                width: 16px; vertical-align: text-top;" />
+                            {% elif issue.priority == 'Trivial' %}p
+                                <img src="cid:trivial_priority_image" style="height: 16px;
+                                width: 16px; vertical-align: text-top;" />
+                            {% endif %}
+                            {{ issue.priority|e }}
                     </td>
                     <td style="width: auto; padding: 0"><div style="height: 28px;
                                                           overflow: hidden;">
@@ -41,30 +98,31 @@
                          font-weight: bold; overflow: hidden;">
                             {{ issue.downstream_id }} </a>
                     </div></td>
-                    <td style="font-size: 14px; padding: 1px; margin-right: 5px;
-                     font-weight: bold; text-align: right;
-                     white-space: nowrap;">
+                    <td style="width: 130px; overflow: visible;
+                           background-color: #ddd; border-radius: 4px;
+                           -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+                           box-shadow: inset 0 1px 2px rgba(0,0,0,.1);">
                         <div style="width: {{ issue.percent_done }}%;
-                                height: 100%;color: #000000;
-                                text-align: center; background-color: #808cee;
-                                background-image:
+                              height: 100%;color: #000000;
+                              text-align: center; background-color: #808cee;
+                              background-image:
                                 linear-gradient(45deg,
-                                rgba(255,255,255,.15) 25%,
-                                transparent 25%,
-                                transparent 50%,
-                                rgba(255,255,255,.15) 50%,
-                                rgba(255,255,255,.15) 75%,
-                                transparent 75%, transparent);
-                                background-size: 40px 40px; color: #000000;
-                                white-space: nowrap; font-size: 14px;">
-                            <span style="padding-left: 5px; padding-top: 5px">
-                              {{ issue.done }}/{{ issues.total }}
+                                                rgba(255,255,255,.15) 25%,
+                                                transparent 25%,
+                                                transparent 50%,
+                                                rgba(255,255,255,.15) 50%,
+                                                rgba(255,255,255,.15) 75%,
+                                                transparent 75%, transparent);
+                              background-size: 40px 40px; color: #000000;
+                              white-space: nowrap; font-size: 14px;">
+                            <span style="padding-left: 5px; padding-top: 5px; font-weight: bold;">
+                              {{ issue.done }}/{{ issue.total }} issues in sync
                             </span>
                         </div>
                     </td>
                 </tr></table>
                 <hr>
-                    {% if 'comments' in check %}
+                    {% if 'comments' in issue.check %}
                         {% if issue.out_of_sync['comments'] == 'in-sync' %}
                             <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10004;</p>
@@ -74,14 +132,12 @@
                             <p style='color:Red; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10006;</p>
                             <h2 style="display:inline; clear: none;"> Comments: </h2>
-                            <p style="display:inline;">There are {{ issue.out_of_sync['comments']|length }} comments out of sync</p>
-{#                                {% for comment in issue.out_of_sync['comments'] %}#}
-{#                                    {{ comment.author }} - {{ comment.body }}#}
-{#                                {% endfor %}#}
+                            <p style="display:inline;font-size: 18px">
+                                There are {{ issue.out_of_sync['comments']|length }} comment(s) out of sync</p>
                         {% endif %}
                     {% endif %}
                     <br/>
-                    {%  if 'tags' in check %}
+                    {%  if 'tags' in issue.check %}
                         {% if issue.out_of_sync['tags'] == 'in-sync' %}
                             <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10004;</p>
@@ -90,24 +146,27 @@
                             <p style='color:Red; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10006;</p>
                             <h2 style="display:inline; clear: none;"> Labels: </h2>
-                            <p style="display:inline;">You have
+                            <p style="display:inline;font-size: 18px">You have
                                 {{ issue.out_of_sync['tags']['difference']|length }} label(s) out of sync</p>
                             <ul style="margin-left: 40px; line-height: 100%;">
                                 <li>
-                                    <b style="display: inline;"> Difference:</b>
-                                    <p style="display: inline;">{% for tag in issue.out_of_sync['tags']['difference']  %}
+                                    <b style="display: inline;font-size:15px;"> Difference:</b>
+                                    <p style="display: inline;font-size:15px;">{% for tag in
+                                    issue.out_of_sync['tags']['difference']  %}
                                     {{ tag }}{{ "," if not loop.last }}
                                     {% endfor %}</p>
                                 </li>
                                 <li>
-                                    <b style="display: inline;" >Downstream:</b>
-                                    <p style="display: inline;">{% for tag in issue.out_of_sync['tags']['downstream']  %}
+                                    <b style="display: inline;font-size:15px;" >Downstream:</b>
+                                    <p style="display: inline;font-size:15px;">{% for tag in
+                                    issue.out_of_sync['tags']['downstream']  %}
                                     {{ tag }}{{ "," if not loop.last }}
                                     {% endfor %}</p>
                                 </li>
                                 <li>
-                                    <b style="display: inline;">Upstream:</b>
-                                    <p style="display: inline;">{% for tag in issue.out_of_sync['tags']['upstream']  %}
+                                    <b style="display: inline;font-size:15px;">Upstream:</b>
+                                    <p style="display: inline;font-size:15px;">{% for tag in
+                                    issue.out_of_sync['tags']['upstream']  %}
                                     {{ tag }}{{ "," if not loop.last }}
                                     {% endfor %}</p>
                                 </li>
@@ -115,7 +174,7 @@
                         {% endif %}
                     {% endif %}
                     <br/>
-                    {% if 'fixVersion' in check %}
+                    {% if 'fixVersion' in issue.check %}
                         {% if issue.out_of_sync['fixVersion'] == 'in-sync' %}
                             <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10004;</p>
@@ -124,26 +183,27 @@
                             <p style='color:Red; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10006;</p>
                             <h2 style="display:inline; clear: none;"> Fix Version: </h2>
-                            <p style="display:inline;">You have
-                                {{ issue.out_of_sync['fixVersion']['difference']|length }} Fix Version(s) out of sync</p>
+                            <p style="display:inline;font-size: 18px">You have
+                                {{ issue.out_of_sync['fixVersion']['difference']|length }}
+                                Fix Version(s) out of sync</p>
                             <ul style="margin-left: 40px; line-height: 100%;">
                                 <li>
-                                    <b style="display: inline;"> Difference:</b>
-                                    <p style="display: inline;">
+                                    <b style="display: inline;font-size:15px;"> Difference:</b>
+                                    <p style="display: inline;font-size:15px;">
                                         {% for tag in issue.out_of_sync['fixVersion']['difference']  %}
                                     {{ tag }}{{ "," if not loop.last }}
                                     {% endfor %}</p>
                                 </li>
                                 <li>
-                                    <b style="display: inline;" >Downstream:</b>
-                                    <p style="display: inline;">
+                                    <b style="display: inline;font-size:15px;" >Downstream:</b>
+                                    <p style="display: inline;font-size:15px;">
                                         {% for tag in issue.out_of_sync['fixVersion']['downstream']  %}
                                     {{ tag }}{{ "," if not loop.last }}
                                     {% endfor %}</p>
                                 </li>
                                 <li>
-                                    <b style="display: inline;">Upstream:</b>
-                                    <p style="display: inline;">
+                                    <b style="display: inline;font-size:15px;">Upstream:</b>
+                                    <p style="display: inline;font-size:15px;">
                                         {% for tag in issue.out_of_sync['fixVersion']['upstream']  %}
                                     {{ tag }}{{ "," if not loop.last }}
                                     {% endfor %}</p>
@@ -152,7 +212,7 @@
                         {% endif %}
                     {% endif %}
                     <br/>
-                    {% if 'assignee' in check %}
+                    {% if 'assignee' in issue.check %}
                         {% if issue.out_of_sync['assignee'] == 'in-sync' %}
                             <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10004;</p>
@@ -161,21 +221,24 @@
                             <p style='color:Red; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10006;</p>
                             <h2 style="display:inline; clear: none;"> Assignee: </h2>
-                            <p style="display:inline;">There are different assignees upstream/downstream</p>
+                            <p style="display:inline;font-size: 18px">
+                                There are different assignees upstream/downstream</p>
                             <ul style="margin-left: 40px; line-height: 100%;">
                                 <li>
-                                    <b style="display: inline;" >Downstream:</b>
-                                    <p style="display: inline;">{{ issue.out_of_sync['assignee']['downstream'] }}</p>
+                                    <b style="display: inline;font-size:15px;" >Downstream:</b>
+                                    <p style="display: inline;font-size:15px;">
+                                        {{ issue.out_of_sync['assignee']['downstream'] }}</p>
                                 </li>
                                 <li>
-                                    <b style="display: inline;" >Upstream:</b>
-                                    <p style="display: inline;">{{ issue.out_of_sync['assignee']['upstream'] }}</p>
+                                    <b style="display: inline;font-size:15px;" >Upstream:</b>
+                                    <p style="display: inline;font-size:15px;">
+                                        {{ issue.out_of_sync['assignee']['upstream'] }}</p>
                                 </li>
                             </ul>
                         {% endif %}
                     {% endif %}
                     <br/>
-                    {% if 'title' in check %}
+                    {% if 'title' in issue.check %}
                         {% if issue.out_of_sync['title'] == 'in-sync' %}
                             <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10004;</p>
@@ -184,20 +247,84 @@
                             <p style='color:Red; border-style: solid; border-radius: 5px; display: inline;
                             margin-left: 40px; padding-right: 2px;'>&#10006;</p>
                             <h2 style="display:inline; clear: none;"> Title: </h2>
-                            <p style="display:inline;">There are different titles upstream/downstream</p>
+                            <p style="display:inline;font-size: 18px">
+                                There are different titles upstream/downstream</p>
                             <ul style="margin-left: 40px; line-height: 100%;">
                                 <li>
-                                    <b style="display: inline;" >Downstream:</b>
-                                    <p style="display: inline;">{{ issue.out_of_sync['title']['downstream'] }}</p>
+                                    <b style="display: inline;font-size:15px;" >Downstream:</b>
+                                    <p style="display: inline;font-size:15px;">
+                                        {{ issue.out_of_sync['title']['downstream'] }}</p>
                                 </li>
                                 <li>
-                                    <b style="display: inline;" >Upstream:</b>
-                                    <p style="display: inline;">{{ issue.out_of_sync['title']['upstream'] }}</p>
+                                    <b style="display: inline;font-size:15px;" >Upstream:</b>
+                                    <p style="display: inline;font-size:15px;">
+                                        {{ issue.out_of_sync['title']['upstream'] }}</p>
                                 </li>
                             </ul>
                         {% endif %}
+                    {% endif %}
+                    <br/>
+                    {% if 'transition' in issue.check %}
+                    {% if issue.out_of_sync['transition'] == 'in-sync' %}
+                        <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
+                        margin-left: 40px; padding-right: 2px;'>&#10004;</p>
+                        <h2 style="display:inline;"> Transition </h2>
+                    {% else %}
+                        <p style='color:Red; border-style: solid; border-radius: 5px; display: inline;
+                        margin-left: 40px; padding-right: 2px;'>&#10006;</p>
+                        <h2 style="display:inline; clear: none;"> Transition: </h2>
+                        {% if 'upstream-close-downstream-open' in issue.out_of_sync['transition'].keys() %}
+                            <p style="display:inline;font-size: 18px;  ">
+                                Upstream is <i>closed</i>, while downstream is <i>open</i></p>
+                            <ul style="margin-left: 40px; line-height: 100%; ">
+                                    <li>
+                                        <b style="display: inline;font-size:15px;" >Downstream:</b>
+                                        <p style="display: inline;font-size:15px;">{{ issue.out_of_sync['transition']
+                                        ['upstream-close-downstream-open']['downstream'] }}</p>
+                                    </li>
+                                    <li>
+                                        <b style="display: inline;font-size:15px;" >Upstream:</b>
+                                        <p style="display: inline;font-size:15px;">{{ issue.out_of_sync['transition']
+                                        ['upstream-close-downstream-open']['upstream'] }}</p>
+                                    </li>
+                             </ul>
+                        {% elif 'upstream-open-downstream-close' in issue.out_of_sync['transition'].keys() %}
+                            <p style="display:inline;font-size: 18px;">
+                                Upstream is <i>open</i>, while downstream is <i>closed</i></p>
+                            <ul style="margin-left: 40px; line-height: 100%;">
+                                    <li>
+                                        <b style="display: inline;font-size:15px;" >Downstream:</b>
+                                        <p style="display: inline;font-size:15px;">{{ issue.out_of_sync['transition']
+                                        ['upstream-open-downstream-close']['downstream'] }}</p>
+                                    </li>
+                                    <li>
+                                        <b style="display: inline;font-size:15px;" >Upstream:</b>
+                                        <p style="display: inline;font-size:15px;">{{ issue.out_of_sync['transition']
+                                        ['upstream-open-downstream-close']['upstream'] }}</p>
+                                    </li>
+                             </ul>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
                 {% endif %}
             {%  endfor %}
     </div>
+    {% if missing_issues %}
+        <div style="width: 60%; margin: auto;">
+            <h1 stlye=""><u>Missing Issues:</u></h1>
+                <p style="font-size: 18px">The following <i>upstream</i> issues have no <i>downstream</i> issue</p>
+                {%  for issue in missing_issues %}
+                    <table width="100%" style="border: 0; margin: 0; width: 100%; padding: 1px;"><tr>
+                        <td style="width: auto; padding: 0"><div style="height: 28px;
+                                                              overflow: hidden;">
+                            <a href="{{ issue.url }}" style="text-decoration: none; font-size: 19px;
+                             font-weight: bold; overflow: hidden;">
+                                [{{ issue.source }}] {{ issue.title }} </a>
+                        </div></td>
+                    </tr></table>
+                {% endfor %}
+        </div>
+    {% endif %}
+    <p style="color:gray;font-size: 18px;text-align: center;">Jibe report created at {{ now }}</p>
     </body>
 </html>

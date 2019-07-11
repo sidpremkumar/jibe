@@ -44,12 +44,14 @@ def get_jira_client(issue, config):
     return client
 
 
-def matching_jira_issue_query(client, issue):
+def matching_jira_issue_query(client, issue, config, free=False):
     """
     API calls that find matching JIRA tickets if any are present
     Args:
         client (jira.client.JIRA): JIRA client
-        issue (jibe.intermediary.Issue): Issue object
+        issue (sync2jira.intermediary.Issue): Issue object
+        config (dict): Config dict
+        free (Bool): Free tag to add 'statusCategory != Done' to query
     Returns:
         results (lst): Returns a list of matching JIRA issues if any are found
     """
@@ -57,6 +59,8 @@ def matching_jira_issue_query(client, issue):
     query = 'issueFunction in linkedIssuesOfRemote("%s") and ' \
         'issueFunction in linkedIssuesOfRemote("%s")' % (
             remote_link_title, issue.url)
+    if free:
+        query += ' and statusCategory != Done'
     # Query the JIRA client and store the results
     results_of_query = client.search_issues(query)
     if len(results_of_query) > 1:
@@ -64,13 +68,39 @@ def matching_jira_issue_query(client, issue):
         # Then when that issue is dropped and another one is created is is created with the same
         # url : pagure.com/something/issue/5.
         # We need to ensure that we are not catching a dropped issue
-        # Loop through the results of the query and make sure the ids
+        # Loop through the results of the query and make sure the ids match
         final_results = []
         for result in results_of_query:
             # If the queried JIRA issue has the id of the upstream issue or the same title
             if issue.id in result.fields.description or issue.title == result.fields.summary:
-                # Add it to the final results
-                final_results.append(result)
+                search = check_comments_for_duplicate(client, result,
+                                                      find_username(issue, config))
+                if search is True:
+                    final_results.append(result)
+                else:
+                    # Else search returned a linked issue
+                    final_results.append(search)
+            # If that's not the case, check if they have the same upstream title
+            # Upstream username/repo can change if repos are merged
+            elif re.search(r"\[[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\\|,.<>\/?]*\] "
+                           + issue.upstream_title,
+                           result.fields.summary):
+                search = check_comments_for_duplicate(client, result,
+                                                      find_username(issue, config))
+                if search is True:
+                    # We went through all the comments and didn't find anything
+                    # that indicated it was a duplicate
+                    log.warning('   Matching downstream issue %s to upstream issue %s' %
+                                (result.fields.summary, issue.title))
+                    final_results.append(result)
+                else:
+                    # Else search returned a linked issue
+                    final_results.append(search)
+        if not final_results:
+            # Just return the most updated issue
+            results_of_query.sort(key=lambda x: datetime.strptime(
+                x.fields.updated, '%Y-%m-%dT%H:%M:%S.%f+0000'))
+            final_results.append(results_of_query[0])
 
         # Return the final_results
         log.debug("Found %i results for query %r", len(final_results), query)
@@ -79,17 +109,59 @@ def matching_jira_issue_query(client, issue):
         return results_of_query
 
 
-def get_existing_jira_issue(client, issue):
+def find_username(issue, config):
+    """
+    Finds JIRA username for an issue object
+    Args:
+        issue (sync2jira.intermediary.Issue): Issue object
+        config (dict): Config dict
+    Returns:
+        return (str): Username string
+    """
+    jira_instance = issue.downstream.get('jira_instance', False)
+    if not jira_instance:
+        jira_instance = config['sync2jira'].get('default_jira_instance', False)
+    if not jira_instance:
+        log.error("   No jira_instance for issue and there is no default in the config")
+        raise Exception
+    return config['sync2jira']['jira'][jira_instance]['basic_auth'][0]
+
+
+def check_comments_for_duplicate(client, result, username):
+    """
+    Checks comment of JIRA issue to see if it has been
+    marked as a duplicate
+    Args:
+        client (jira.client.JIRA): JIRA client)
+        result (jira.resource.Issue): JIRA issue
+        username (str): Username of JIRA user
+    Returns:
+        return (bool): True if duplicate comment was not found
+        *Or*
+        return (jira.resource.Issue): JIRA issue if we were able to
+                                      find it
+    """
+    for comment in client.comments(result):
+        search = re.search(r'Marking as duplicate of (\w*)-(\d*)',
+                           comment.body)
+        if search and comment.author.name == username:
+            issue_id = search.groups()[0] + '-' + search.groups()[1]
+            return client.issue(issue_id)
+    return True
+
+
+def get_existing_jira_issue(client, issue, config):
     """
     Get a jira issue by the linked remote issue.
     This is the new supported way of doing this.
     Args:
         client (jira.client.JIRA): JIRA client
         issue (jibe.intermediary.Issue): Issue object
+        config (dict): Config dict
     Returns:
         response (lst): Returns a list of matching JIRA issues if any are found
     """
-    results = matching_jira_issue_query(client, issue)
+    results = matching_jira_issue_query(client, issue, config)
     if results:
         return results[0]
     else:
@@ -105,7 +177,7 @@ def comment_matching(issue_comments, comments):
     Returns:
         updated_comments dict: Updated Upstream issue comments
     """
-    found = True
+    found = False
     final_comments = []
     # Loop through all comments, if we find a match, set found to True
     # And move onto the next comment. Otherwise it was not found and
@@ -113,14 +185,15 @@ def comment_matching(issue_comments, comments):
     for comment_upstream in issue_comments:
         for comment_jira in comments:
             if comment_upstream['body'] in comment_jira.body:
-                found = False
+                found = True
                 break
         if not found:
             found = True
             final_comments.append(comment_upstream)
         else:
-            found = True
+            found = False
     return final_comments
+
 
 def check_comments(existing, issue, client):
     """
@@ -147,7 +220,10 @@ def check_comments(existing, issue, client):
             date_created=comment['date_created']
         ))
     # Update and return issue
-    issue.out_of_sync['comments'] = updated_comments
+    if len(updated_comments) == 0:
+        issue.out_of_sync['comments'] = 'in-sync'
+    else:
+        issue.out_of_sync['comments'] = updated_comments
     return issue
 
 
@@ -162,7 +238,7 @@ def check_tags(existing, issue):
                                             out-of-sync updated
     """
     # If they're the same just return
-    if existing.fields.labels == issue.tags:
+    if sorted(existing.fields.labels) == sorted(issue.tags):
         return issue
     # Else they are different
     upstream = issue.tags
@@ -211,16 +287,14 @@ def check_assignee(existing, issue):
                                             out-of-sync updated
     """
     if existing.fields.assignee:
-        if issue.source == 'github':
-            if existing.fields.assignee.displayName == issue.assignee[0]['fullname']:
-                # If they're the same return
-                return issue
-    elif issue.assignee is None:
+        if existing.fields.assignee.displayName == issue.assignee[0]['fullname']:
+            # If they're the same return
+            return issue
+    elif not issue.assignee:
         # If they are both unassigned
         return issue
     # Else they are different
-    if issue.source == 'github':
-        upstream = issue.assignee[0]['fullname']
+    upstream = issue.assignee[0]['fullname']
     downstream = existing.fields.assignee
     issue.out_of_sync['assignee'] = {'upstream': upstream, 'downstream': downstream}
     return issue
@@ -334,30 +408,37 @@ def update_out_of_sync(existing, issue, client, config):
     if 'tags' in check:
         log.info('   Looking for out of sync tags')
         issue = check_tags(existing, issue)
-        if issue.out_of_sync['comments'] == 'in-sync':
+        if issue.out_of_sync['tags'] == 'in-sync':
             total_done += 1
 
     if 'fixVersion' in check:
         log.info('   Looking for out of sync fixVersion(s)')
         issue = check_fixVersion(existing, issue)
-
+        if issue.out_of_sync['fixVersion'] == 'in-sync':
+            total_done += 1
 
     if 'assignee' in check:
         log.info('   Looking for out of sync assignee(s)')
         issue = check_assignee(existing, issue)
+        if issue.out_of_sync['assignee'] == 'in-sync':
+            total_done += 1
 
     if 'title' in check:
         log.info('   Looking for out of sync title')
         issue = check_title(existing, issue)
+        if issue.out_of_sync['title'] == 'in-sync':
+            total_done += 1
 
     if any('transition' in item for item in check):
         log.info('   Looking for out of sync transition state')
         issue = check_transition(existing, issue)
+        if issue.out_of_sync['transition'] == 'in-sync':
+            total_done += 1
 
     # Update percent done
     issue.total = len(check)
-
-    import pdb; pdb.set_trace()
+    issue.done = total_done
+    issue.percent_done = int(100 * float(issue.done) / float(issue.total))
     return issue
 
 
@@ -381,7 +462,7 @@ def sync_with_downstream(issues, config):
         client = get_jira_client(issue, config)
 
         # Try to find
-        existing = get_existing_jira_issue(client, issue)
+        existing = get_existing_jira_issue(client, issue, config)
         if existing:
             # If we found an existing JIRA issue already
             log.info("   Found existing, matching downstream %r.", existing.key)
@@ -390,7 +471,6 @@ def sync_with_downstream(issues, config):
             out_of_sync_issues.append(updated_issue)
         else:
             log.warning("   Could not find existing issue for %s", issue.title)
-            issue.out_of_sync.append({'missing_in_jira': 'Nothing'})
             missing_issues.append(issue)
 
     return out_of_sync_issues, missing_issues
