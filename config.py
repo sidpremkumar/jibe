@@ -1,35 +1,36 @@
 config = {
     'jibe': {
-        # Don't actually make changes to JIRA...
-        'testing': False,
+        # Your Github token
+        'github_token': 'GITHUB_TOKEN',
 
-        'legacy_matching': False,
-
+        # Defualt JIRA instance to use of none is provided
         'default_jira_instance': 'example',
 
         'jira': {
            'example': {
                'options': {
-                   'server': 'https://projects.devel.engineering.redhat.com',
-                   'verify': False,
+                   'server': 'SOME_JIRA_SERVER',
+                   'verify': True,
                },
-               'basic_auth': ('spremkum', 'wnmquh6d'),
+               'basic_auth': ('USERNAME', 'PASSWORD'),
            },
         },
 
-        'upstream': {
-            'pagure': {
-                'Demo_project': {'project': 'FACTORY', 'component': 'gitbz',
-                                 'check': ['comments', 'tags', 'fixVersion', 'assignee', 'title',
-                                           {'transition': 'CUSTOM_CLOSED_STATUS'}]},
-                #'koji': { 'project': 'BREW', 'component': None, },
-            },
-            'github': {
-                'sidpremkumar/Demo_project': {'project': 'FACTORY', 'component': 'gitbz',
-                                              'check': ['comments', 'tags', 'fixVersion', 'assignee', 'title',
-                                                        {'transition': 'CUSTOM_CLOSED_STATUS'}]},
+        'send-to': {
+            'NAME_OF_GROUP': {
+                'upstream': {
+                    'pagure': {
+                        # 'Demo_project': {'check': ['comments', 'tags', 'fixVersion', 'assignee', 'title',
+                        #                            {'transition': 'CUSTOM_CLOSED_STATUS'}]},
+                    },
+                    'github': {
+                        # 'Demo_username/Demo_project': {'check': ['comments', 'tags', 'fixVersion', 'assignee',
+                        #                                           'title', {'transition': 'CUSTOM_CLOSED_STATUS'}]},
+                    },
+                },
+                'email-to': ['SOME_EMAIL_LIST'],
+                #'fun': True
+                },
             },
         },
-        'github_token': '***'
-    },
-}
+    }
