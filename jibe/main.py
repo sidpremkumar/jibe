@@ -39,7 +39,7 @@ def load_sync2jira_config():
                         later in the program
     """
     # Import out config files
-    import sync2jira
+    import sync2jira_config
     import config_sync2jira
 
     # Extract relevant data

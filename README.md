@@ -30,7 +30,8 @@ optional arguments:
 ```
 
 `--sync2jira`: This argument can be added to parse JIRA data from a [sync2jira](https://pagure.io/sync-to-jira) config 
-file. Copy the contents into the Jibe directory and set up [config_sync2jira.py](config_sync2jira.py).
+file. Copy the contents into the Jibe directory and set up [config_sync2jira.py](config_sync2jira.py). Rename the file 
+to sync2jira_config.py and you should be all set. 
 
 `--link-issue`: This argument takes two values: Downstream issue ID and upstream URL. To link a downstream and upstream
 issue users can use this command **and** ensure the titles of the issues are the same. 
