@@ -39,7 +39,6 @@ def get_jira_client(issue, config):
     if not jira_instance:
         log.error("   No jira_instance for issue and there is no default in the config")
         raise Exception
-
     client = jira.client.JIRA(**config['jibe']['jira'][jira_instance])
     return client
 
@@ -63,6 +62,7 @@ def matching_jira_issue_query(client, issue, config, free=False):
         query += ' and statusCategory != Done'
     # Query the JIRA client and store the results
     results_of_query = client.search_issues(query)
+
     if len(results_of_query) > 1:
         # Sometimes if an issue gets dropped it is created with the url: pagure.com/something/issue/5
         # Then when that issue is dropped and another one is created is is created with the same
@@ -72,7 +72,8 @@ def matching_jira_issue_query(client, issue, config, free=False):
         final_results = []
         for result in results_of_query:
             # If the queried JIRA issue has the id of the upstream issue or the same title
-            if issue.id in result.fields.description or issue.title == result.fields.summary:
+            if issue.id in result.fields.description or issue.title == result.fields.summary or \
+                    issue.upstream_title == result.fields.summary:
                 search = check_comments_for_duplicate(client, result,
                                                       find_username(issue, config))
                 if search is True:
