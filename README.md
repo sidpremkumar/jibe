@@ -17,7 +17,6 @@ python setup.py develop
 ```
 
 ## Script
-#### jibe
 ```shell
 > jibe --help 
 
