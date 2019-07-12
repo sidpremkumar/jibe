@@ -15,6 +15,7 @@ For development:
 ```
 python setup.py develop 
 ```
+To configure emails. Please add the appropriate `DEFAULT_FROM` and `DEFAULT_SERVER` in [mailer.py](jibe/mailer.py)
 
 ## Script
 ```shell
