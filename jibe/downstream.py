@@ -48,7 +48,7 @@ def matching_jira_issue_query(client, issue, config, free=False):
     API calls that find matching JIRA tickets if any are present
     Args:
         client (jira.client.JIRA): JIRA client
-        issue (sync2jira.intermediary.Issue): Issue object
+        issue (jibe.intermediary.Issue): Issue object
         config (dict): Config dict
         free (Bool): Free tag to add 'statusCategory != Done' to query
     Returns:
@@ -114,18 +114,18 @@ def find_username(issue, config):
     """
     Finds JIRA username for an issue object
     Args:
-        issue (sync2jira.intermediary.Issue): Issue object
+        issue (jibe.intermediary.Issue): Issue object
         config (dict): Config dict
     Returns:
         return (str): Username string
     """
     jira_instance = issue.downstream.get('jira_instance', False)
     if not jira_instance:
-        jira_instance = config['sync2jira'].get('default_jira_instance', False)
+        jira_instance = config['jibe'].get('default_jira_instance', False)
     if not jira_instance:
         log.error("   No jira_instance for issue and there is no default in the config")
         raise Exception
-    return config['sync2jira']['jira'][jira_instance]['basic_auth'][0]
+    return config['jibe']['jira'][jira_instance]['basic_auth'][0]
 
 
 def check_comments_for_duplicate(client, result, username):
@@ -287,16 +287,22 @@ def check_assignee(existing, issue):
         response (jibe.intermediary.Issue): Issue object with updated
                                             out-of-sync updated
     """
-    if existing.fields.assignee:
+    if existing.fields.assignee and issue.assignee:
         if existing.fields.assignee.displayName == issue.assignee[0]['fullname']:
             # If they're the same return
             return issue
-    elif not issue.assignee:
+    elif not issue.assignee and not issue.assingee[0]:
         # If they are both unassigned
         return issue
     # Else they are different
-    upstream = issue.assignee[0]['fullname']
-    downstream = existing.fields.assignee
+    if issue.assignee[0]:
+        upstream = issue.assignee[0]['fullname']
+    else:
+        upstream = 'Unassigned'
+    if existing.fields.assignee:
+        downstream = existing.fields.assignee
+    else:
+        downstream = 'Unassigned'
     issue.out_of_sync['assignee'] = {'upstream': upstream, 'downstream': downstream}
     return issue
 

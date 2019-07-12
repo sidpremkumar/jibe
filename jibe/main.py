@@ -44,7 +44,7 @@ def load_sync2jira_config():
 
     # Extract relevant data
     old_config = config_sync2jira.config
-    sync2jira_config = sync2jira.config
+    sync2jira_config = sync2jira_config.config
 
     # Start building our new config file
     new_config = {'jibe': {}}

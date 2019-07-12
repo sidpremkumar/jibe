@@ -17,7 +17,7 @@ python setup.py develop
 ```
 
 ## Script
-##### jibe
+To configure emails. Please add the appropriate `DEFAULT_FROM` and `DEFAULT_SERVER` in [mailer.py](jibe/mailer.py)
 ```shell
 > jibe --help 
 
@@ -26,12 +26,14 @@ optional arguments:
   --sync2jira           Parse config file set up to take input fromsync2jira
                         config file
   --link-issue FACTORY-XXX some_url.com
+<<<<<<< HEAD
                         Add remote link to downstream issu
 ```
 
 `--sync2jira`: This argument can be added to parse JIRA data from a [sync2jira](https://pagure.io/sync-to-jira) config 
 file. Copy the contents into the Jibe directory and set up [config_sync2jira.py](config_sync2jira.py). Rename the file 
 to sync2jira_config.py and you should be all set. 
+
 
 `--link-issue`: This argument takes two values: Downstream issue ID and upstream URL. To link a downstream and upstream
 issue users can use this command **and** ensure the titles of the issues are the same. 
