@@ -26,7 +26,7 @@ optional arguments:
   --sync2jira           Parse config file set up to take input fromsync2jira
                         config file
   --link-issue FACTORY-XXX some_url.com
-                        Add remote link to downstream issu
+                        Add remote link to downstream issue
 ```
 
 `--sync2jira`: This argument can be added to parse JIRA data from a [sync2jira](https://pagure.io/sync-to-jira) config 
