@@ -15,6 +15,10 @@ For development:
 ```
 python setup.py develop 
 ```
+Set up Mailer by setting the following environmental variables: 
+
+1. `export DEFAULT_FROM="Email address used to send emails"`
+2. `export DEFAULT_SERVER="Mail server to be used"`
 
 ## Script
 To configure emails. Please add the appropriate `DEFAULT_FROM` and `DEFAULT_SERVER` in [mailer.py](jibe/mailer.py)
@@ -23,8 +27,7 @@ To configure emails. Please add the appropriate `DEFAULT_FROM` and `DEFAULT_SERV
 
 optional arguments:
   -h, --help            show this help message and exit
-  --sync2jira           Parse config file set up to take input fromsync2jira
-                        config file
+  --sync2jira           Parse sync2jira config file instead 
   --link-issue FACTORY-XXX some_url.com
                         Add remote link to downstream issues
   --ignore-in-sync      Omit issues that are in sync from report

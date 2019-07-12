@@ -230,8 +230,7 @@ def main():
             "that are out of sync"
     argparser = argparse.ArgumentParser(usage=usage)
     argparser.add_argument('--sync2jira', default=False, action='store_true',
-                           help='Parse config file set up to take input from'
-                                'sync2jira config file')
+                           help='Parse sync2jira config file instead ')
     argparser.add_argument('--link-issue', nargs=2, type=str,
                            metavar=('FACTORY-XXX', 'some_url.com'),
                            help='Add remote link to downstream issue')

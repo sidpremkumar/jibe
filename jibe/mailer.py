@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
 from os.path import dirname, join
+import os
 
 class Mailer:
     """
@@ -13,8 +14,9 @@ class Mailer:
     Modified from the Serapis Project
     """
 
-    DEFAULT_FROM = ""
-    DEFAULT_SERVER = ""
+    DEFAULT_FROM = os.environ['DEFAULT_FROM']
+    DEFAULT_SERVER = os.environ['DEFAULT_SERVER']
+
 
     def __init__(self):
         """Returns mailer object
