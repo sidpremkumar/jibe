@@ -23,7 +23,7 @@
                             {% elif issue.priority  == 'Minor' or issue.priority  == 'Normal' %}
                                 <img src="cid:minor_priority_image" style="height: 16px;
                                 width: 16px; vertical-align: text-top;" />
-                            {% elif issue.priority == 'Trivial' %}p
+                            {% elif issue.priority == 'Trivial' %}
                                 <img src="cid:trivial_priority_image" style="height: 16px;
                                 width: 16px; vertical-align: text-top;" />
                             {% endif %}
@@ -135,8 +135,8 @@
                             <p style="display:inline;font-size: 18px">
                                 There are {{ issue.out_of_sync['comments']|length }} comment(s) out of sync</p>
                         {% endif %}
-                    {% endif %}
                     <br/>
+                    {% endif %}
                     {%  if 'tags' in issue.check %}
                         {% if issue.out_of_sync['tags'] == 'in-sync' %}
                             <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
@@ -172,8 +172,8 @@
                                 </li>
                             </ul>
                         {% endif %}
-                    {% endif %}
                     <br/>
+                    {% endif %}
                     {% if 'fixVersion' in issue.check %}
                         {% if issue.out_of_sync['fixVersion'] == 'in-sync' %}
                             <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
@@ -210,8 +210,8 @@
                                 </li>
                             </ul>
                         {% endif %}
-                    {% endif %}
                     <br/>
+                    {% endif %}
                     {% if 'assignee' in issue.check %}
                         {% if issue.out_of_sync['assignee'] == 'in-sync' %}
                             <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
@@ -236,8 +236,8 @@
                                 </li>
                             </ul>
                         {% endif %}
-                    {% endif %}
                     <br/>
+                    {% endif %}
                     {% if 'title' in issue.check %}
                         {% if issue.out_of_sync['title'] == 'in-sync' %}
                             <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;
@@ -262,8 +262,8 @@
                                 </li>
                             </ul>
                         {% endif %}
-                    {% endif %}
                     <br/>
+                    {% endif %}
                     {% if 'transition' in issue.check %}
                     {% if issue.out_of_sync['transition'] == 'in-sync' %}
                         <p style='color:Green; border-style: solid; border-radius: 5px; display: inline;

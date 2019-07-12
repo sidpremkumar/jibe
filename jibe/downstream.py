@@ -1,5 +1,6 @@
 # Built In Modules
 import logging
+import re
 
 # 3rd Party Modules
 import jira.client

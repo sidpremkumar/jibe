@@ -235,6 +235,8 @@ def main():
     argparser.add_argument('--link-issue', nargs=2, type=str,
                            metavar=('FACTORY-XXX', 'some_url.com'),
                            help='Add remote link to downstream issue')
+    argparser.add_argument('--ignore-in-sync', default=False, action='store_true',
+                           help='Omit issues that are in sync from report')
     args = argparser.parse_args()
 
     # Load in config file
@@ -266,8 +268,17 @@ def main():
         else:
             joke = ''
 
+        # Remove in sync items if requested
+        if args.ignore_in_sync:
+            new_out_of_sync_issues = []
+            for issue in out_of_sync_issues:
+                if issue.total != issue.done:
+                    new_out_of_sync_issues.append(issue)
+            out_of_sync_issues = new_out_of_sync_issues
+
         # Then generate the HTML
         html = create_html(out_of_sync_issues, missing_issues, joke)
+
 
         # Create mailer object and send email
         Mailer = m.Mailer()

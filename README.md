@@ -26,8 +26,8 @@ optional arguments:
   --sync2jira           Parse config file set up to take input fromsync2jira
                         config file
   --link-issue FACTORY-XXX some_url.com
-<<<<<<< HEAD
-                        Add remote link to downstream issu
+                        Add remote link to downstream issues
+  --ignore-in-sync      Omit issues that are in sync from report
 ```
 
 `--sync2jira`: This argument can be added to parse JIRA data from a [sync2jira](https://pagure.io/sync-to-jira) config 
@@ -37,6 +37,8 @@ to sync2jira_config.py and you should be all set.
 
 `--link-issue`: This argument takes two values: Downstream issue ID and upstream URL. To link a downstream and upstream
 issue users can use this command **and** ensure the titles of the issues are the same. 
+
+`--ignore-in-sync`: This argument will omit all in-sync issues from Jibe report
 ## Tests 
 Coming soon
 
