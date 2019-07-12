@@ -1,5 +1,11 @@
 <html>
     <body style="font-family: Georgia; font-size: 14px;">
+    {% if out_of_sync_issues|length == 0  %}
+         <div style="width: 100%; margin: auto;text-align: center;">
+        <h1 stlye=""><u>All your issues are in Sync!</u> <p style='color:Green;
+                 border-style: solid; border-radius: 5px; display: inline;'>&#10004;</p></h1>
+         </div>
+        {% else %}
         <div style="width: 60%; margin: auto;">
             {% if joke %}
                 <h1 style="font-size: 20px;text-align: center;"><u>{{ joke }}</u></h1>
@@ -309,6 +315,7 @@
                 {% endif %}
             {%  endfor %}
     </div>
+    {% endif %}
     {% if missing_issues %}
         <div style="width: 60%; margin: auto;">
             <h1 stlye=""><u>Missing Issues:</u></h1>

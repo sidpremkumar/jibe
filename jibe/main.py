@@ -279,8 +279,11 @@ def main():
         # Then generate the HTML
         html = create_html(out_of_sync_issues, missing_issues, joke)
 
-
         # Create mailer object and send email
+        if not config['jibe']['send-to'][group]['email-to']:
+            log.warning('   Email list is empty. No one was emailed.')
+            return
+
         Mailer = m.Mailer()
         Mailer.send(config['jibe']['send-to'][group]['email-to'],
                     'Jibe Report for ' + group, html)
