@@ -1,5 +1,9 @@
 # Built In Modules
 import logging
+try:
+    from urllib.parse import urlencode  # py3
+except ImportError:
+    from urllib import urlencode  # py2
 
 # 3rd Party Modules
 import requests

@@ -20,7 +20,7 @@ class Issue(object):
         self.reporter = reporter
         self.assignee = assignee
         self.status = status
-        self.id = id
+        self.id = str(id)
         self.downstream_url = ''
         self.downstream_id = ''
         self.percent_done = ''

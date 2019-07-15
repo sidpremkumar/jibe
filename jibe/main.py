@@ -2,6 +2,7 @@
 import logging
 from datetime import datetime
 import argparse
+import sys
 
 # 3rd Party Modules
 import jinja2
@@ -30,6 +31,19 @@ def load_config():
     return config.config
 
 
+def load_config_files():
+    """
+    Loads sync2jira config files
+    Args:
+    Returns:
+        config, config (dict): Sync2jira and Jibe config files
+    """
+    # Import out config files
+    import sync2jira_config
+    import config_sync2jira
+
+    return sync2jira_config.config, config_sync2jira.config
+
 def load_sync2jira_config():
     """
     Generates and validates the config file from a sync2jira file
@@ -38,13 +52,8 @@ def load_sync2jira_config():
         config (dict): The config dict to be used
                         later in the program
     """
-    # Import out config files
-    import sync2jira_config
-    import config_sync2jira
-
-    # Extract relevant data
-    old_config = config_sync2jira.config
-    sync2jira_config = sync2jira_config.config
+    # Open up our files
+    old_config, sync2jira_config = load_config_files()
 
     # Start building our new config file
     new_config = {'jibe': {}}
@@ -102,6 +111,7 @@ def create_html(out_of_sync_issues, missing_issues, joke):
     templateEnv = jinja2.Environment(loader=templateLoader)
     TEMPLATE_FILE = "html_template.jinja"
     template = templateEnv.get_template(TEMPLATE_FILE)
+
     if joke:
         templatevars = {"now": datetime.now().strftime('%Y-%m-%d'),
                         "out_of_sync_issues": out_of_sync_issues,
@@ -217,13 +227,13 @@ def get_dad_joke():
     res = requests.get('https://icanhazdadjoke.com/', headers=headers)
     return res.json()['joke']
 
-
-def main():
+def parse_args(args):
     """
-    Main function to start sync
+    Function to parse arguments
     Args:
+        args (str): Arguments
     Returns:
-        Nothing
+        parser (Namespace): Parsed Arguments
     """
     # Build out argparser
     usage = "CLI for generating reports on upstream/downstream issues " \
@@ -236,17 +246,29 @@ def main():
                            help='Add remote link to downstream issue')
     argparser.add_argument('--ignore-in-sync', default=False, action='store_true',
                            help='Omit issues that are in sync from report')
-    args = argparser.parse_args()
+    parser = argparser.parse_args(args)
+    return parser
+
+
+def main():
+    """
+    Main function to start sync
+    Args:
+    Returns:
+        Nothing
+    """
+    # Parse arguments
+    arguments = parse_args(sys.argv[1:])
 
     # Load in config file
-    if args.sync2jira:
+    if arguments.sync2jira:
         config = load_sync2jira_config()
     else:
         config = load_config()
 
-    if args.link_issue:
+    if arguments.link_issue:
         # Call link function and return
-        attach_link(args.link_issue[0], args.link_issue[1], config)
+        attach_link(arguments.link_issue[0], arguments.link_issue[1], config)
         return
 
     # Loop through all groups
@@ -268,7 +290,7 @@ def main():
             joke = ''
 
         # Remove in sync items if requested
-        if args.ignore_in_sync:
+        if arguments.ignore_in_sync:
             new_out_of_sync_issues = []
             for issue in out_of_sync_issues:
                 if issue.total != issue.done:
@@ -283,8 +305,7 @@ def main():
             log.warning('   Email list is empty. No one was emailed.')
             return
 
-        Mailer = m.Mailer()
-        Mailer.send(config['jibe']['send-to'][group]['email-to'],
+        m.send(config['jibe']['send-to'][group]['email-to'],
                     'Jibe Report for ' + group, html)
         log.info('   Finished sending report for %s' % group)
 
