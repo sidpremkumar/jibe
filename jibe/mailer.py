@@ -25,6 +25,7 @@ def __init__(self):
     self._cfg.setdefault("server", self.DEFAULT_SERVER)
     self._cfg.setdefault("from", self.DEFAULT_FROM)
 
+
 def send(self, recipients, subject, text):
     """ Sends email to recipients
     :param list recipients : recipients of email

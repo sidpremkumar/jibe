@@ -1,6 +1,7 @@
 # Built In Modules
 import logging
 import re
+from datetime import datetime
 
 # 3rd Party Modules
 import jira.client
@@ -274,7 +275,7 @@ def check_fixVersion(existing, issue):
     downstream = jira_fixVersion
     difference = [i for i in jira_fixVersion if i not in issue.fixVersion] + \
                  [j for j in issue.fixVersion if j not in jira_fixVersion]
-    issue.out_of_sync['fixVersions'] = {'upstream': upstream, 'downstream': downstream, 'difference': difference}
+    issue.out_of_sync['fixVersion'] = {'upstream': upstream, 'downstream': downstream, 'difference': difference}
     return issue
 
 

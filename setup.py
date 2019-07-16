@@ -1,7 +1,16 @@
 from setuptools import setup
 
-with open('requirements.txt', 'rb') as f:
-    install_requires = f.read().decode('utf-8').split('\n')
+try:
+    with open('requirements.txt', 'rb') as f:
+        install_requires = f.read().decode('utf-8').split('\n')
+except IOError:
+    install_requires = []
+
+try:
+    with open('test-requirements.txt', 'rb') as f:
+        tests_require = f.read().decode('utf-8').split('\n')
+except IOError:
+    tests_require = []
 
 setup(
     name='jibe',
@@ -23,8 +32,8 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     install_requires=install_requires,
-    #tests_require=tests_require,
-    #test_suite='nose.collector',
+    tests_require=tests_require,
+    test_suite='nose.collector',
     packages=[
         'jibe',
     ],

@@ -1,0 +1,10 @@
+[run]
+branch=True
+source=jibe/
+omit=jibe/mailer.py
+
+[report]
+fail_under=60
+
+[html]
+directory=./coverage_report

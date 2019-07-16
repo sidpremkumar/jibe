@@ -44,6 +44,7 @@ def load_config_files():
 
     return sync2jira_config.config, config_sync2jira.config
 
+
 def load_sync2jira_config():
     """
     Generates and validates the config file from a sync2jira file
@@ -227,6 +228,7 @@ def get_dad_joke():
     res = requests.get('https://icanhazdadjoke.com/', headers=headers)
     return res.json()['joke']
 
+
 def parse_args(args):
     """
     Function to parse arguments
@@ -306,6 +308,5 @@ def main():
             return
 
         m.send(config['jibe']['send-to'][group]['email-to'],
-                    'Jibe Report for ' + group, html)
+               'Jibe Report for ' + group, html)
         log.info('   Finished sending report for %s' % group)
-

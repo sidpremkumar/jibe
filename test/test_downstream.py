@@ -9,10 +9,7 @@ except ImportError:
 
 # Local Modules
 import jibe.downstream as d
-from jibe.intermediary import Issue, Comment
-
-# 3rd Party Modules
-from nose.tools import eq_
+from jibe.intermediary import Issue
 
 # Global Variables
 PATH = 'jibe.downstream.'
@@ -48,15 +45,21 @@ class TestDownstream(unittest.TestCase):
             'project': 'mock_project',
             'custom_fields': {'somecustumfield': 'somecustumvalue'},
             'type': 'Fix',
-            'updates': [
+            'check': [
                 'comments',
-                {'tags': {'overwrite': False}},
-                {'fixVersion': {'overwrite': False}},
-                'assignee', 'description', 'title',
+                'tags',
+                'fixVersion',
+                'assignee', 'title',
                 {'transition': 'CUSTOM TRANSITION'}
             ],
             'owner': 'mock_owner'
         }
+        self.mock_issue.out_of_sync = {'tags': 'in-sync',
+                                       'fixVersion': 'in-sync',
+                                       'assignee': 'in-sync',
+                                       'title': 'in-sync',
+                                       'transition': 'in-sync',
+                                       'comments': 'in-sync'}
         self.mock_issue.content = 'mock_content'
         self.mock_issue.reporter = {'fullname': 'mock_user'}
         self.mock_issue.url = 'mock_url'
@@ -64,9 +67,8 @@ class TestDownstream(unittest.TestCase):
         self.mock_issue.comments = 'mock_comments'
         self.mock_issue.tags = ['tag1', 'tag2']
         self.mock_issue.fixVersion = ['fixVersion3', 'fixVersion4']
-        self.mock_issue.fixVersion = ['fixVersion3', 'fixVersion4']
         self.mock_issue.assignee = [{'fullname': 'mock_assignee'}]
-        self.mock_issue.status = 'Open'
+        self.mock_issue.status = 'Closed'
         self.mock_issue.id = '1234'
 
         # Mock jira.resources.Issue
@@ -80,6 +82,10 @@ class TestDownstream(unittest.TestCase):
         self.mock_downstream.fields.fixVersions = [mock_version1, mock_version2]
         self.mock_downstream.update.return_value = True
         self.mock_downstream.fields.description = "This is an existing description"
+        self.mock_downstream.fields.assignee.displayName = 'mock_assignee'
+        self.mock_downstream.fields.summary = 'mock_title'
+        self.mock_downstream.fields.status.name = 'CUSTOM TRANSITION'
+        self.mock_downstream.key = 'mock_key'
 
     @mock.patch('jira.client.JIRA')
     def test_get_jira_client_not_issue(self,
@@ -157,7 +163,8 @@ class TestDownstream(unittest.TestCase):
         bad_downstream_issue = MagicMock()
         bad_downstream_issue.fields.description = 'bad'
         bad_downstream_issue.fields.summary = 'bad'
-        mock_client.search_issues.return_value = [mock_downstream_issue, bad_downstream_issue]
+        mock_client.search_issues.return_value = [mock_downstream_issue,
+                                                  bad_downstream_issue]
         mock_check_comments_for_duplicates.return_value = True
         mock_find_username.return_value = 'mock_username'
 
@@ -261,12 +268,13 @@ class TestDownstream(unittest.TestCase):
         )
 
         # Assert everything was called correctly
-        mock_comment_matching.assert_called_with(self.mock_issue.comments, 'mock_comments')
+        mock_comment_matching.assert_called_with(self.mock_issue.comments,
+                                                 'mock_comments')
         self.assertEqual(response.out_of_sync['comments'], 'in-sync')
 
     @mock.patch(PATH + 'comment_matching')
     @mock.patch('jira.client.JIRA')
-    def test_check_comments_duplicates(self,
+    def test_check_comments_out_of_sync(self,
                                        mock_client,
                                        mock_comment_matching):
         """
@@ -287,7 +295,234 @@ class TestDownstream(unittest.TestCase):
         )
 
         # Assert everything was called correctly
-        mock_comment_matching.assert_called_with(self.mock_issue.comments, 'mock_comments')
+        mock_comment_matching.assert_called_with(self.mock_issue.comments,
+                                                 'mock_comments')
         self.assertEqual(response.out_of_sync['comments'][0].author, 'mock_author')
         self.assertEqual(response.out_of_sync['comments'][0].body, 'mock_body')
         self.assertEqual(response.out_of_sync['comments'][0].date_created, 'mock_date')
+
+    def test_check_tags(self):
+        """
+        Tests 'check_tags' function where we have all tags in sync
+        """
+        # Set up return values
+        self.mock_downstream.fields.labels = ['tag1', 'tag2']
+
+        # Call the function
+        response = d.check_tags(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['tags'], 'in-sync')
+
+    def test_check_tags_out_of_sync(self):
+        """
+        Tests 'check_tags' function where we don't have all tags in sync
+        """
+        # Call the function
+        response = d.check_tags(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['tags'],
+                         {'difference': ['tag3', 'tag4', 'tag1', 'tag2'],
+                          'upstream': ['tag1', 'tag2'],
+                          'downstream': ['tag3', 'tag4']})
+
+    def test_check_fixVersion(self):
+        """
+        Test 'check_fixVersion' function where we have all fixVersions in sync
+        """
+        # Call the function
+        response = d.check_fixVersion(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['fixVersion'], 'in-sync')
+
+    def test_check_fixVersion_out_of_sync(self):
+        """
+        Test 'check_fixVersion' function where we do not have all fixVersions in sync
+        """
+        # Set up return values
+        self.mock_issue.fixVersion = ['fixVersion5']
+
+        # Call the function
+        response = d.check_fixVersion(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['fixVersion'],
+                         {'upstream': ['fixVersion5'],
+                          'downstream': ['fixVersion3', 'fixVersion4'],
+                          'difference': ['fixVersion3', 'fixVersion4',
+                                         'fixVersion5']})
+
+    def test_check_assginee(self):
+        """
+        Test 'check_assignee' function where we have assignees in sync
+        """
+        # Call the function
+        response = d.check_assignee(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['assignee'], 'in-sync')
+
+    def test_check_assginee_out_of_sync(self):
+        """
+        Test 'check_assignee' function where we have assignees in sync
+        """
+        # Set up return values
+        self.mock_issue.assignee = [{'fullname': 'dummy_user'}]
+
+        # Call the function
+        response = d.check_assignee(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['assignee'],
+                         {'upstream': 'dummy_user',
+                          'downstream': self.mock_downstream.fields.assignee})
+
+    def test_check_title(self):
+        """
+        Tests 'check_title' function where we have titles in sync
+        """
+        # Call the function
+        response = d.check_title(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['title'], 'in-sync')
+
+    def test_check_title_out_of_sync(self):
+        """
+        Tests 'check_title' function where we have title out of sync
+        """
+        # Set up return values
+        self.mock_issue.title = 'dummy_title'
+
+        # Call the function
+        response = d.check_title(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['title'], {'upstream': 'dummy_title',
+                                                         'downstream': 'mock_title'})
+
+    def test_check_transition(self):
+        """
+        Tests 'check_transition' function where we have transitions in sync
+        """
+        # Call the function
+        response = d.check_transition(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['transition'], 'in-sync')
+
+    def test_check_transition_out_of_sync_upstream(self):
+        """
+        Tests 'check_transition' function where we don't have transitions in sync
+            * Upstream is closed
+            * Downstream is open
+        """
+        # Set up return values
+        self.mock_downstream.fields.status.name = 'Open'
+        self.mock_issue.status = 'Closed'
+
+        # Call the function
+        response = d.check_transition(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['transition'],
+                         {'upstream-close-downstream-open':
+                              {'upstream': 'Closed', 'downstream': 'Open'}})
+
+    def test_check_transition_out_of_sync_downstream(self):
+        """
+        Tests 'check_transition' function where we don't have transitions in sync
+            * Upstream is Open
+            * Downstream is Closed
+        """
+        # Set up return values
+        self.mock_downstream.fields.status.name = 'CUSTOM TRANSITION'
+        self.mock_issue.status = 'Open'
+
+        # Call the function
+        response = d.check_transition(self.mock_downstream, self.mock_issue)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.out_of_sync['transition'],
+                         {'upstream-open-downstream-close':
+                              {'upstream': 'Open', 'downstream':
+                                  'CUSTOM TRANSITION'}})
+
+    @mock.patch(PATH + 'check_comments')
+    @mock.patch(PATH + 'check_tags')
+    @mock.patch(PATH + 'check_fixVersion')
+    @mock.patch(PATH + 'check_assignee')
+    @mock.patch(PATH + 'check_title')
+    @mock.patch(PATH + 'check_transition')
+    @mock.patch('jira.client.JIRA')
+    def test_update_out_of_sync(self,
+                                mock_client,
+                                mock_check_transition,
+                                mock_check_title,
+                                mock_check_assignee,
+                                mock_check_fixVersion,
+                                mock_check_tags,
+                                mock_check_comments):
+        """
+        Tests 'update_out_of_sync' function
+        """
+        # Set up return values
+        mock_check_transition.return_value = self.mock_issue
+        mock_check_title.return_value = self.mock_issue
+        mock_check_assignee.return_value = self.mock_issue
+        mock_check_fixVersion.return_value = self.mock_issue
+        mock_check_tags.return_value = self.mock_issue
+        mock_check_comments.return_value = self.mock_issue
+
+        # Call the function
+        response = d.update_out_of_sync(
+            existing=self.mock_downstream,
+            issue=self.mock_issue,
+            client=mock_client,
+            config=self.mock_config)
+
+        # Assert everything was called correctly
+        self.assertEqual(response.total, 6)
+        self.assertEqual(response.done, 6)
+        self.assertEqual(response.percent_done, 100)
+
+    @mock.patch(PATH + 'get_jira_client')
+    @mock.patch(PATH + 'get_existing_jira_issue')
+    @mock.patch(PATH + 'update_out_of_sync')
+    @mock.patch('jira.client.JIRA')
+    def test_sync_with_downstream(self,
+                                  mock_client,
+                                  mock_update_out_of_sync,
+                                  mock_get_existing_jira_issue,
+                                  mock_get_jira_client):
+        """
+        Tests 'sync_with_downstream' function
+        """
+        # Set up return values
+        mock_bad_issue = MagicMock()
+        mock_update_out_of_sync.return_value = self.mock_issue
+        mock_get_existing_jira_issue.side_effect = [self.mock_downstream, None]
+        mock_get_jira_client.return_value = mock_client
+
+        # Call the function
+        out_of_sync_issues, missing_issues = d.sync_with_downstream(
+            issues=[self.mock_issue, mock_bad_issue],
+            config=self.mock_config
+        )
+
+        # Assert everything was called correctly
+        self.assertEqual(out_of_sync_issues, [self.mock_issue])
+        self.assertEqual(missing_issues, [mock_bad_issue])
+        mock_get_jira_client.assert_any_call(self.mock_issue, self.mock_config)
+        mock_get_jira_client.assert_any_call(mock_bad_issue, self.mock_config)
+        mock_update_out_of_sync.assert_called_with(
+            self.mock_downstream,
+            self.mock_issue,
+            mock_client,
+            self.mock_config
+        )
+
+
+
