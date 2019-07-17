@@ -27,8 +27,12 @@ class Issue(object):
         self.done = ''
         self.total = ''
         self.check = []
-        self.out_of_sync = {'comments': 'in-sync', 'tags': 'in-sync', 'fixVersion': 'in-sync',
-                            'assignee': 'in-sync', 'title': 'in-sync', 'transition': 'in-sync'}
+        self.out_of_sync = {'comments': 'in-sync',
+                            'tags': 'in-sync',
+                            'fixVersion': 'in-sync',
+                            'assignee': 'in-sync',
+                            'title': 'in-sync',
+                            'transition': 'in-sync'}
         if not downstream:
             self.downstream = config['jibe']['send-to'][group]['upstream'][self.source][upstream]
         else:
@@ -87,7 +91,8 @@ class Issue(object):
                 continue
             # Else add the comment
             # Convert the date to datetime
-            comment['date_created'] = datetime.utcfromtimestamp(float(comment['date_created']))
+            comment['date_created'] = datetime.fromtimestamp(
+                float(comment['date_created']))
             comments.append({
                 'author': comment['user']['name'],
                 'body': comment['comment'],

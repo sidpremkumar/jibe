@@ -99,11 +99,15 @@ def create_html(out_of_sync_issues, missing_issues, joke):
     """
     Generates HTML from out-of-sync data
     Args:
-        out_of_sync_issues ([jibe.intermediary.Issue]): Out of sync issues
-                                                      that have updated out_of_sync
+        out_of_sync_issues ([jibe.intermediary.Issue]): Out of sync
+                                                        issues
+                                                        that have updated
+                                                        out_of_sync
                                                       lists
-        missing_issues ([jib.intermediary.Issues]): Issues that have no matching downstream
-                                                  issue
+        missing_issues ([jib.intermediary.Issues]): Issues that
+                                                    have no
+                                                    matching downstream
+                                                    issue
         joke (str): Optional joke string
     Returns:
         outputText (str): Generated HTML text
@@ -170,7 +174,8 @@ def attach_link_helper(client, downstream, remote_link):
                                            creating the
                                            JIRA ticket
     """
-    log.info("   Attaching tracking link %r to %r", remote_link, downstream.key)
+    log.info("   Attaching tracking link %r to %r",
+             remote_link, downstream.key)
     modified_desc = downstream.fields.description + " "
 
     # This is crazy.  Querying for application links requires admin perms which
@@ -246,7 +251,8 @@ def parse_args(args):
     argparser.add_argument('--link-issue', nargs=2, type=str,
                            metavar=('FACTORY-XXX', 'some_url.com'),
                            help='Add remote link to downstream issue')
-    argparser.add_argument('--ignore-in-sync', default=False, action='store_true',
+    argparser.add_argument('--ignore-in-sync', default=False,
+                           action='store_true',
                            help='Omit issues that are in sync from report')
     parser = argparser.parse_args(args)
     return parser
@@ -270,7 +276,8 @@ def main():
 
     if arguments.link_issue:
         # Call link function and return
-        attach_link(arguments.link_issue[0], arguments.link_issue[1], config)
+        attach_link(arguments.link_issue[0],
+                    arguments.link_issue[1], config)
         return
 
     # Loop through all groups
@@ -279,7 +286,8 @@ def main():
         issues = u.get_upstream_issues(config, group)
 
         # Compare them with downstream issues
-        out_of_sync_issues, missing_issues = d.sync_with_downstream(issues, config)
+        out_of_sync_issues, missing_issues = \
+            d.sync_with_downstream(issues, config)
 
         # Return differences to the user
         # First format the check array for each issue

@@ -39,7 +39,8 @@ def get_jira_client(issue, config):
     if not jira_instance:
         jira_instance = config['jibe'].get('default_jira_instance', False)
     if not jira_instance:
-        log.error("   No jira_instance for issue and there is no default in the config")
+        log.error("   No jira_instance for issue and "
+                  "there is no default in the config")
         raise Exception
     client = jira.client.JIRA(**config['jibe']['jira'][jira_instance])
     return client
@@ -66,15 +67,19 @@ def matching_jira_issue_query(client, issue, config, free=False):
     results_of_query = client.search_issues(query)
 
     if len(results_of_query) > 1:
-        # Sometimes if an issue gets dropped it is created with the url: pagure.com/something/issue/5
-        # Then when that issue is dropped and another one is created is is created with the same
+        # Sometimes if an issue gets dropped it is created with the
+        # url: pagure.com/something/issue/5
+        # Then when that issue is dropped and another one is
+        # created is is created with the same
         # url : pagure.com/something/issue/5.
         # We need to ensure that we are not catching a dropped issue
         # Loop through the results of the query and make sure the ids match
         final_results = []
         for result in results_of_query:
-            # If the queried JIRA issue has the id of the upstream issue or the same title
-            if issue.id in result.fields.description or issue.title == result.fields.summary or \
+            # If the queried JIRA issue has the id of the upstream
+            # issue or the same title
+            if issue.id in result.fields.description or issue.title == \
+                    result.fields.summary or \
                     issue.upstream_title == result.fields.summary:
                 search = check_comments_for_duplicate(client, result,
                                                       find_username(issue, config))
@@ -85,15 +90,19 @@ def matching_jira_issue_query(client, issue, config, free=False):
                     final_results.append(search)
             # If that's not the case, check if they have the same upstream title
             # Upstream username/repo can change if repos are merged
-            elif re.search(r"\[[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\\|,.<>\/?]*\] "
+            elif re.search(r"\[[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':\
+            \|,.<>\/?]*\] "
                            + issue.upstream_title,
                            result.fields.summary):
                 search = check_comments_for_duplicate(client, result,
-                                                      find_username(issue, config))
+                                                      find_username(
+                                                          issue,
+                                                          config))
                 if search is True:
                     # We went through all the comments and didn't find anything
                     # that indicated it was a duplicate
-                    log.warning('   Matching downstream issue %s to upstream issue %s' %
+                    log.warning('   Matching downstream issue '
+                                '%s to upstream issue %s' %
                                 (result.fields.summary, issue.title))
                     final_results.append(result)
                 else:
@@ -125,7 +134,8 @@ def find_username(issue, config):
     if not jira_instance:
         jira_instance = config['jibe'].get('default_jira_instance', False)
     if not jira_instance:
-        log.error("   No jira_instance for issue and there is no default in the config")
+        log.error("   No jira_instance for issue and there"
+                  " is no default in the config")
         raise Exception
     return config['jibe']['jira'][jira_instance]['basic_auth'][0]
 
@@ -248,7 +258,10 @@ def check_tags(existing, issue):
     downstream = existing.fields.labels
     difference = [i for i in existing.fields.labels if i not in issue.tags] + \
                  [j for j in issue.tags if j not in existing.fields.labels]
-    issue.out_of_sync['tags'] = {'upstream': upstream, 'downstream': downstream, 'difference': difference}
+    issue.out_of_sync['tags'] = \
+        {'upstream': upstream,
+         'downstream': downstream,
+         'difference': difference}
     return issue
 
 
@@ -275,7 +288,9 @@ def check_fixVersion(existing, issue):
     downstream = jira_fixVersion
     difference = [i for i in jira_fixVersion if i not in issue.fixVersion] + \
                  [j for j in issue.fixVersion if j not in jira_fixVersion]
-    issue.out_of_sync['fixVersion'] = {'upstream': upstream, 'downstream': downstream, 'difference': difference}
+    issue.out_of_sync['fixVersion'] =\
+        {'upstream': upstream, 'downstream':
+            downstream, 'difference': difference}
     return issue
 
 
@@ -290,7 +305,8 @@ def check_assignee(existing, issue):
                                             out-of-sync updated
     """
     if existing.fields.assignee and issue.assignee:
-        if existing.fields.assignee.displayName == issue.assignee[0]['fullname']:
+        if existing.fields.assignee.displayName\
+                == issue.assignee[0]['fullname']:
             # If they're the same return
             return issue
     elif not issue.assignee and not issue.assingee[0]:
@@ -305,7 +321,8 @@ def check_assignee(existing, issue):
         downstream = existing.fields.assignee
     else:
         downstream = 'Unassigned'
-    issue.out_of_sync['assignee'] = {'upstream': upstream, 'downstream': downstream}
+    issue.out_of_sync['assignee'] = \
+        {'upstream': upstream, 'downstream': downstream}
     return issue
 
 
@@ -319,13 +336,15 @@ def check_title(existing, issue):
         response (jibe.intermediary.Issue): Issue object with updated
                                             out-of-sync updated
     """
-    if existing.fields.summary == issue.title or existing.fields.summary == issue.upstream_title:
+    if existing.fields.summary == issue.title \
+            or existing.fields.summary == issue.upstream_title:
         # If they're the same return
         return issue
     # Else they are different
     upstream = issue.title
     downstream = existing.fields.summary
-    issue.out_of_sync['title'] = {'upstream': upstream, 'downstream': downstream}
+    issue.out_of_sync['title'] = \
+        {'upstream': upstream, 'downstream': downstream}
     return issue
 
 
@@ -342,23 +361,32 @@ def check_transition(existing, issue):
     # First get the closed status from the config file
     try:
         # For python 3 >
-        closed_status = list(filter(lambda d: "transition" in d, issue.downstream.get('check')))[0]['transition']
+        closed_status = list(
+            filter(lambda d: "transition" in d, issue.downstream.get(
+                'check')))[0]['transition']
     except ValueError:
         # for python 2.7
-        closed_status = (filter(lambda d: "transition" in d, issue.downstream.get('check')))[0]['transition']
-    if issue.status == 'Closed' and existing.fields.status.name.upper() == closed_status.upper() or \
-            issue.status == 'Open' and existing.fields.status.name.upper() != closed_status.upper():
+        closed_status = (
+            filter(lambda d: "transition" in d, issue.downstream.get(
+                'check')))[0]['transition']
+    if issue.status == 'Closed' and\
+            existing.fields.status.name.upper() == closed_status.upper() or \
+            issue.status == 'Open' and \
+            existing.fields.status.name.upper() != closed_status.upper():
         # They are in sync just return
         return issue
 
     # Else they are different
     upstream = issue.status
     downstream = existing.fields.status.name
-    out_of_sync = {'transition': {'upstream': upstream, 'downstream': downstream}}
-    if issue.status == 'Closed' and existing.fields.status.name.upper() != closed_status.upper():
+    out_of_sync = {'transition': {'upstream': upstream,
+                                  'downstream': downstream}}
+    if issue.status == 'Closed' and \
+            existing.fields.status.name.upper() != closed_status.upper():
         # Upstream issue is closed while downstream issue is open
         out_of_sync = {'upstream-close-downstream-open': {'upstream': upstream, 'downstream': downstream}}
-    elif issue.status == 'Open' and existing.fields.status.name.upper() == closed_status.upper():
+    elif issue.status == 'Open' and \
+            existing.fields.status.name.upper() == closed_status.upper():
         # Upstream issue is open while downstream issue is closed
         out_of_sync = {'upstream-open-downstream-close': {'upstream': upstream, 'downstream': downstream}}
     issue.out_of_sync['transition'] = out_of_sync

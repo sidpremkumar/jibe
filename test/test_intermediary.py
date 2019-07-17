@@ -53,7 +53,7 @@ class TestIntermediary(unittest.TestCase):
         This tests the 'from_pagure' function under the Issue class
         """
         # Set up return values
-        mock_datetime.utcfromtimestamp.return_value = 'mock_date'
+        mock_datetime.fromtimestamp.return_value = 'mock_date'
         mock_issue = {
             'comments': [{
                 'date_created': '1234',

@@ -32,8 +32,10 @@ def get_upstream_issues(config, group):
     all_issues = []
     # Get all Github Issues
     # First get a list of upstream names
-    github_repo_names = config['jibe']['send-to'][group]['upstream']['github'].keys()
-    pagure_repo_names = config['jibe']['send-to'][group]['upstream']['pagure'].keys()
+    github_repo_names = config['jibe']['send-to'][group]['upstream']['github']\
+        .keys()
+    pagure_repo_names = config['jibe']['send-to'][group]['upstream']['pagure']\
+        .keys()
     for repo in github_repo_names:
         # Loop through all repos and get issue data
         for issue in github_issues(repo, config, group):
@@ -73,7 +75,8 @@ def pagure_issues(upstream, config, group):
             reason = response.json()
         except Exception:
             reason = response.text
-        raise IOError("response: %r %r %r" % (response, reason, response.request.url))
+        raise IOError("response: %r %r %r" %
+                      (response, reason, response.request.url))
     data = response.json()['issues']
 
     # Reformat  the assignee value so that it is enclosed within an array
@@ -83,7 +86,8 @@ def pagure_issues(upstream, config, group):
     for issue in data:
         issue['assignee'] = [issue['assignee']]
 
-    issues = (i.Issue.from_pagure(upstream, issue, config, group) for issue in data)
+    issues = (i.Issue.from_pagure(upstream, issue, config, group)
+              for issue in data)
     for issue in issues:
         yield issue
 
@@ -118,11 +122,13 @@ def github_issues(upstream, config, group):
 
     issues = _get_all_github_issues(url, headers)
 
-    # Initialize Github object so we can get their full name (instead of their username)
+    # Initialize Github object so we can get their full
+    # name (instead of their username)
     # And get comments if needed
     github_client = Github(config['jibe']['github_token'])
 
-    # We need to format everything to a standard to we can create an issue object
+    # We need to format everything to a standard to we can
+    # create an issue object
     final_issues = []
     for issue in issues:
         # Update comments:
@@ -177,7 +183,8 @@ def github_issues(upstream, config, group):
         final_issues.append(issue)
 
     final_issues = list((
-        i.Issue.from_github(upstream, issue, config, group) for issue in final_issues
+        i.Issue.from_github(
+            upstream, issue, config, group) for issue in final_issues
         if 'pull_request' not in issue  # We don't want to copy these around
     ))
 
@@ -219,5 +226,6 @@ def _fetch_github_data(url, headers):
             reason = response.json()
         except Exception:
             reason = response.text
-        raise IOError("response: %r %r %r" % (response, reason, response.request.url))
+        raise IOError("response: %r %r %r" %
+                      (response, reason, response.request.url))
     return response

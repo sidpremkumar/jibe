@@ -43,8 +43,11 @@ issue users can use this command **and** ensure the titles of the issues are the
 
 `--ignore-in-sync`: This argument will omit all in-sync issues from Jibe report
 ## Tests 
-Coming soon
-
+Tests are run through the tox automation project
+```shell
+tox
+```
+They are automatically run against Python 3.7. HTML coverage files can be found under [htmlcov-py36](htmlcov-py36).
 ## Configuration 
 You can edit the `config.py` file to add an email list and relevant checks. A sample config file 
 can be found [here](config.py)
@@ -69,3 +72,4 @@ from an upstream repo. You can use `pagure_issues` as an example.
 1. Edit the function `get_upstream_issues` in [upstream.py](jibe/upstream.py) to append the newly created issues 
 to the `all_issues` list
 1. You're all done! Now you should be able to add the repo to the config file 🤠
+1. *Note:* If you want to submit a PR, please add appropriate tests. 
